@@ -107,7 +107,7 @@ class Broker:
             for p in (providers or PROVIDERS)
         ]
 
-        if threading.current_thread() is threading.main_thread()
+        if threading.current_thread() is threading.main_thread():
             try:
                 self._loop.add_signal_handler(signal.SIGINT, self.stop)
                 # add_signal_handler() is not implemented on Win
