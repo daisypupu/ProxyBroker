@@ -6,13 +6,17 @@ from collections import Counter, defaultdict
 from functools import partial
 from pprint import pprint
 
+import threading
+
 from .checker import Checker
 from .errors import ResolveError
 from .providers import PROVIDERS, Provider
 from .proxy import Proxy
-from .resolver import Resolver
+# from .resolver import Resolver
+from .resolver_custom import ResolverCustom
 from .server import Server
 from .utils import IPPortPatternLine, log
+
 
 # Pause between grabbing cycles; in seconds.
 GRAB_PAUSE = 180
@@ -63,7 +67,8 @@ class Broker:
     ):
         self._loop = loop or asyncio.get_event_loop()
         self._proxies = queue or asyncio.Queue(loop=self._loop)
-        self._resolver = Resolver(loop=self._loop)
+        # self._resolver = Resolver(loop=self._loop)
+        self._resolver = ResolverCustom(loop=self._loop)
         self._timeout = timeout
         self._verify_ssl = verify_ssl
 
@@ -102,12 +107,13 @@ class Broker:
             for p in (providers or PROVIDERS)
         ]
 
-        try:
-            self._loop.add_signal_handler(signal.SIGINT, self.stop)
-            # add_signal_handler() is not implemented on Win
-            # https://docs.python.org/3.5/library/asyncio-eventloops.html#windows
-        except NotImplementedError:
-            pass
+        if threading.current_thread() is threading.main_thread()
+            try:
+                self._loop.add_signal_handler(signal.SIGINT, self.stop)
+                # add_signal_handler() is not implemented on Win
+                # https://docs.python.org/3.5/library/asyncio-eventloops.html#windows
+            except NotImplementedError:
+                pass
 
     async def grab(self, *, countries=None, limit=0):
         """Gather proxies from the providers without checking.
